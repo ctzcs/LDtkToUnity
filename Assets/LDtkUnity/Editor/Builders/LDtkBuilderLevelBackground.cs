@@ -40,6 +40,11 @@ namespace LDtkUnity.Editor
             
             SpriteRenderer renderer = CreateGameObject("_BgColor");
             renderer.sprite = LDtkResourcesLoader.LoadDefaultTileSprite();
+            //NOTE 修改为TilesMode,并使用图片宽度
+            renderer.drawMode = SpriteDrawMode.Tiled;
+            //这里是地图的size
+            
+            renderer.size = _level.UnityPxSize/_importer.PixelsPerUnit; ;
             renderer.color = _level.UnityBgColor;
 
             _layerSortingOrder.Next();
@@ -89,7 +94,8 @@ namespace LDtkUnity.Editor
         {
             trans.parent = _levelTransform.transform;
             trans.localPosition = _worldSpaceSize/2;
-            trans.localScale = new Vector3(_worldSpaceSize.x, _worldSpaceSize.y, 1);
+            //trans.localScale = new Vector3(_worldSpaceSize.x, _worldSpaceSize.y, 1);
+            trans.localScale = Vector3.one;
         }
         private void ManipulateImageTransform(Transform trans)
         {

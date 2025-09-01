@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 
 namespace LDtkUnity
 {
@@ -6,18 +7,48 @@ namespace LDtkUnity
     {
         private const string SPRITE_PATH = "LDtkDefaultSquare";
         private const string TILE_PATH = "LDtkDefaultTile";
-
+        private const string USER_SETTINGS_PATH = "Assets/Resources/LDtkUserSetting.asset";
+        private static LDtkUserSetting _setting;
         private static Sprite _defaultSprite;
         private static LDtkIntGridTile _defaultTile;
+        private static bool _hasLoaded;
+
+        private static void LoadUserSetting()
+        {
+            if (_hasLoaded)
+            {
+                return;
+            }
+            _hasLoaded = true;
+            _setting = AssetDatabase.LoadAssetAtPath<LDtkUserSetting>(USER_SETTINGS_PATH);
+        }
         
         public static Sprite LoadDefaultTileSprite()
         {
+            if (!_setting)
+            {
+                LoadUserSetting();
+                if (_setting)
+                {
+                    _defaultSprite = _setting.LDtkDefaultSquare;
+                    return _defaultSprite;
+                }
+            }
+            else
+            {
+                _defaultSprite = _setting.LDtkDefaultSquare;
+                return _defaultSprite;
+            }
+            
+            Debug.LogError("LDtkUserSetting: 请在Assets/Resources下创建LDtkUserSetting。[LDtk/LDtkUserSetting]");
             if (_defaultSprite)
             {
                 return _defaultSprite;
             }
             _defaultSprite = Resources.Load<Sprite>(SPRITE_PATH);
             return _defaultSprite;
+            
+            
         }
 
         public static LDtkIntGridTile LoadDefaultTile()
