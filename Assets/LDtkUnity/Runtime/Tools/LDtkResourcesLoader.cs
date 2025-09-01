@@ -7,20 +7,14 @@ namespace LDtkUnity
     {
         private const string SPRITE_PATH = "LDtkDefaultSquare";
         private const string TILE_PATH = "LDtkDefaultTile";
-        private const string USER_SETTINGS_PATH = "Assets/Resources/LDtkUserSetting.asset";
+        private const string USER_SETTINGS_PATH = "LDtkUserSetting";
         private static LDtkUserSetting _setting;
         private static Sprite _defaultSprite;
         private static LDtkIntGridTile _defaultTile;
-        private static bool _hasLoaded;
 
         private static void LoadUserSetting()
         {
-            if (_hasLoaded)
-            {
-                return;
-            }
-            _hasLoaded = true;
-            _setting = AssetDatabase.LoadAssetAtPath<LDtkUserSetting>(USER_SETTINGS_PATH);
+            _setting = Resources.Load<LDtkUserSetting>(USER_SETTINGS_PATH);
         }
         
         public static Sprite LoadDefaultTileSprite()
