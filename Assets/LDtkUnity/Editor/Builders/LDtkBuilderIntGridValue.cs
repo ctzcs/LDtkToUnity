@@ -22,6 +22,20 @@ namespace LDtkUnity.Editor
             LayerDefinition layerDef = Layer.Definition;
             IntGridValueDefinition[] intGridValueDefs = layerDef.IntGridValues;
             int defsLength = intGridValueDefs.Length;
+            //NOTE 这里添加了一段特殊处理让默认的为空的Grid显示这个
+            IntGridValueDefinition groundDefinition = null;
+            
+            for (int i = 0; i < defsLength; i++)
+            {
+                //如果IntGridValueDefinition里面有Ground，那么为空的默认使用这个intGridValuesDef
+                
+                if (intGridValueDefs[i].Identifier == Project.DefaultIntGridName)
+                {
+                    groundDefinition =  intGridValueDefs[i];
+                }
+            }
+            
+            
 
             LDtkProfiler.BeginSample("MakeDefToTile");
             Dictionary<IntGridValueDefinition, TileBase> defToTile = new Dictionary<IntGridValueDefinition, TileBase>(defsLength);
@@ -67,23 +81,34 @@ namespace LDtkUnity.Editor
                 int intGridValue = Layer.IntGridCsv[i];
                 
                 //all empty intgrid values are 0
-                if (intGridValue <= 0)
+                if (intGridValue < 0)
                 {
                     continue;
                 }
 
-                //IntGrid value defs are reorder-able. instead of accessing index, we access the one with the matching value.
-                int index = reorderableIntGridValuesMap[intGridValue];
-
-                if (index < 0 || index >= defsLength)
+                IntGridValueDefinition intGridValueDef = null; 
+                if (intGridValue == 0)
                 {
-                    LDtkDebug.LogError($"Can't build IntGrid value when trying to access a IntGridValue definition due to OutOfBoundsException. Tried index \"{index}\" of array length \"{defsLength}\". " +
-                                       $"Level:{Layer.LevelReference.Identifier}, Layer:{Layer.Identifier}, IntGridValue:{intGridValue}");
-                    continue;
+                    if (groundDefinition == null)
+                    {
+                        continue;
+                    }
+                    intGridValueDef = groundDefinition;
+                }
+                else
+                {
+                    //IntGrid value defs are reorder-able. instead of accessing index, we access the one with the matching value.
+                    int index = reorderableIntGridValuesMap[intGridValue];
+                
+                    if (index < 0 || index >= defsLength)
+                    {
+                        LDtkDebug.LogError($"Can't build IntGrid value when trying to access a IntGridValue definition due to OutOfBoundsException. Tried index \"{index}\" of array length \"{defsLength}\". " +
+                                           $"Level:{Layer.LevelReference.Identifier}, Layer:{Layer.Identifier}, IntGridValue:{intGridValue}");
+                        continue;
+                    }
+                    intGridValueDef = intGridValueDefs[index];
                 }
                 
-                IntGridValueDefinition intGridValueDef = intGridValueDefs[index];
-
                 LDtkProfiler.BeginSample("GetTilemapToBuildOn");
                 TilemapTilesBuilder tilemapToBuildOn = GetTilemapToBuildOn(defToKey[intGridValueDef]);
                 LDtkProfiler.EndSample();

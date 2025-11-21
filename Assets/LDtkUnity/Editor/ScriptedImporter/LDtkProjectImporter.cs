@@ -32,6 +32,8 @@ namespace LDtkUnity.Editor
         public const string USE_PARALLAX = nameof(_useParallax);
         public const string SCALE_ENTITIES = nameof(_scaleEntities);
         
+        public const string DEFAULT_INTGRID_NAME = nameof(_defaultIntGridName);
+        
         public const string INTGRID = nameof(_intGridValues);
         public const string ENTITIES = nameof(_entities);
         
@@ -56,6 +58,8 @@ namespace LDtkUnity.Editor
         [SerializeField] private bool _createLevelBoundsTrigger = false;
         [SerializeField] private bool _useParallax = true;
         [SerializeField] private bool _scaleEntities = true;
+        
+        [SerializeField] private string _defaultIntGridName;
         
         [SerializeField] private LDtkAssetIntGridValue[] _intGridValues = Array.Empty<LDtkAssetIntGridValue>();
         
@@ -86,6 +90,7 @@ namespace LDtkUnity.Editor
         private LDtkArtifactAssets _artifacts;
         private static string[] _previousDependencies;
         public LDtkTableOfContents Toc { get; private set; }
+        public string DefaultIntGridName => _defaultIntGridName;
 
         //this will run upon standard reset, but also upon the meta file generation during the first import
         private void Reset()

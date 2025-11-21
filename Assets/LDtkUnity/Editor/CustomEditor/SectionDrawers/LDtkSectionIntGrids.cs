@@ -9,6 +9,7 @@ namespace LDtkUnity.Editor
     {
         private readonly GUIContent _buttonContent;
         
+        private SerializedProperty _defaultIntGridNameSp;
         protected override string PropertyName => LDtkProjectImporter.INTGRID;
         protected override string GuiText => "IntGrids";
         protected override string GuiTooltip => "Assign a tile to be used in place of an IntGridValue. If you assign Int Grid tiles, you'll be able to separate tilemaps by Tag/Layer/PhysicsMaterial. Make some with the button to the right of this text.";
@@ -23,10 +24,18 @@ namespace LDtkUnity.Editor
                 image = LDtkIconUtility.LoadIntGridIcon(),
                 tooltip = "Create a new IntGrid tile asset."
             };
+            _defaultIntGridNameSp = serializedObject.FindProperty(LDtkProjectImporter.DEFAULT_INTGRID_NAME);
         }
 
         protected override void GetDrawers(LayerDefinition[] defs, List<LDtkContentDrawer<LayerDefinition>> drawers)
         {
+            
+            EditorGUILayout.PropertyField(_defaultIntGridNameSp,new GUIContent()
+            {
+                text = "DefaultIntGridName",
+                tooltip = "This name will match layer as default intGrid. Warning: After modification, you must reimport the level",
+            });
+            
             //iterator is for figuring out which array index we should really be using, since any layer could have any amount of intgrid values
             LDtkDrawerIntGridValueIterator intGridValueIterator = new LDtkDrawerIntGridValueIterator();
             
