@@ -11,6 +11,8 @@ namespace LDtkUnity.Editor
 
         //in most realistic situations, tiles will not overlap, but we can overestimate anyways to avoid resizing 
         private Dictionary<Vector3Int, int> _depth;
+        private Dictionary<int, int> _autoLayerRulePriority;
+        private int _autoLayerRuleZStride;
 
         public Tilemap Map;
         
@@ -43,6 +45,10 @@ namespace LDtkUnity.Editor
             
             LDtkProfiler.BeginSample("sortingOrder =");
             renderer.sortingOrder = SortingOrder.SortingOrderValue;
+            if (ShouldUseIndividualMode())
+            {
+                renderer.mode = TilemapRenderer.Mode.Individual;
+            }
             LDtkProfiler.EndSample();
 
             LDtkProfiler.BeginSample("AddTilemapCollider");
@@ -53,6 +59,7 @@ namespace LDtkUnity.Editor
         public void BuildTileset(TileInstance[] tiles)
         {
             _tiles = tiles;
+            CacheAutoLayerRulePriority();
             
             LDtkProfiler.BeginSample("EvaluateTilesetDefinition");
             TilesetDefinition tilesetDef = EvaluateTilesetDefinition();
@@ -146,7 +153,8 @@ namespace LDtkUnity.Editor
             {
                 //todo find a way to improve performance of this somehow where we dont need to make a vector3int copy
                 Vector3Int cell = job.Output[i].Cell;
-                cell.z = GetNextCellZ(cell);
+                //cell.z = GetNextCellZ(cell);
+                cell.z = GetNextCellZ(cell, _tiles[i]);
                 tileAssets[i].position = cell;
                 tileAssets[i].transform = job.Output[i].Matrix;
             }
@@ -169,7 +177,73 @@ namespace LDtkUnity.Editor
         {
             return Layer.OverrideTilesetUid != null ? Layer.OverrideTilesetDefinition : Layer.TilesetDefinition;
         }
+
+        private bool ShouldUseIndividualMode()
+        {
+            if (!Layer.IsAutoLayer)
+            {
+                return false;
+            }
+
+            AutoLayerRuleGroup[] groups = Layer.Definition.AutoRuleGroups;
+            return groups != null && groups.Length > 0;
+        }
+
+        private void CacheAutoLayerRulePriority()
+        {
+            _autoLayerRulePriority = null;
+            _autoLayerRuleZStride = 1;
+            if (!Layer.IsAutoLayer)
+            {
+                return;
+            }
+
+            AutoLayerRuleGroup[] groups = Layer.Definition.AutoRuleGroups;
+            if (groups == null || groups.Length == 0)
+            {
+                return;
+            }
+
+            _autoLayerRulePriority = new Dictionary<int, int>();
+            int priority = 0;
+            for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
+            {
+                AutoLayerRuleDefinition[] rules = groups[groupIndex].Rules;
+                if (rules == null)
+                {
+                    continue;
+                }
+
+                for (int ruleIndex = 0; ruleIndex < rules.Length; ruleIndex++)
+                {
+                    _autoLayerRulePriority[rules[ruleIndex].Uid] = priority;
+                    priority++;
+                }
+            }
+
+            _autoLayerRuleZStride = 16;
+        }
         
+        /// <param name="cell">Z is always 0</param>
+        private int GetNextCellZ(Vector3Int cell, TileInstance tile)
+        {
+            if (_autoLayerRulePriority == null || !_autoLayerRulePriority.TryGetValue(tile.AutoLayerRuleId, out int priority))
+            {
+                return GetNextCellZ(cell);
+            }
+
+            int baseZ = priority * _autoLayerRuleZStride;
+            Vector3Int priorityCell = new Vector3Int(cell.x, cell.y, baseZ);
+            if (!_depth.ContainsKey(priorityCell))
+            {
+                _depth.Add(priorityCell, 0);
+                return baseZ;
+            }
+
+            _depth[priorityCell] += 1;
+            return baseZ + _depth[priorityCell];
+        }
+
         /// <param name="cell">Z is always 0</param>
         private int GetNextCellZ(Vector3Int cell)
         {
